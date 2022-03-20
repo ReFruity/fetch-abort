@@ -1,14 +1,15 @@
 import { rest, setupWorker } from 'msw'
 import { factory, oneOf, manyOf, primaryKey } from '@mswjs/data'
 import { nanoid } from '@reduxjs/toolkit'
-import faker from 'faker'
+import { faker } from '@faker-js/faker'
 import seedrandom from 'seedrandom'
 import { Server as MockSocketServer } from 'mock-socket'
-import { setRandom } from 'txtgen'
+// import { setRandom } from 'txtgen'
 
 import { parseISO } from 'date-fns'
 
 const NUM_USERS = 3
+const NUM_ITEMS = 10
 const POSTS_PER_USER = 3
 const RECENT_NOTIFICATIONS_DAYS = 7
 
@@ -38,7 +39,7 @@ if (useSeededRNG) {
   }
 
   rng = seedrandom(randomSeedString)
-  setRandom(rng)
+  // setRandom(rng)
   faker.seed(seedDate.getTime())
 }
 
@@ -88,6 +89,10 @@ export const db = factory({
     eyes: Number,
     post: oneOf('post'),
   },
+  item: {
+    id: primaryKey(nanoid),
+    name: String,
+  }
 })
 
 const createUserData = () => {
@@ -122,14 +127,25 @@ for (let i = 0; i < NUM_USERS; i++) {
   }
 }
 
+for (let i = 0; i < NUM_USERS; i++) {
+  const newItem = { name: `item${i}` }
+  db.item.create(newItem)
+}
+
 const serializePost = (post) => ({
   ...post,
   user: post.user.id,
 })
 
+const serializeItem = (item) => item.name
+
 /* MSW REST API Handlers */
 
 export const handlers = [
+  rest.get('/fakeApi/items', function (req, res, ctx) {
+    const items = db.item.getAll().map(serializeItem())
+    return res(ctx.delay(ARTIFICIAL_DELAY_MS), ctx.json(items))
+  }),
   rest.get('/fakeApi/posts', function (req, res, ctx) {
     const posts = db.post.getAll().map(serializePost)
     return res(ctx.delay(ARTIFICIAL_DELAY_MS), ctx.json(posts))
