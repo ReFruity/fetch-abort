@@ -18,7 +18,7 @@ const getDelay = (minSeconds, maxSeconds) => {
 }
 
 export const fetchItems = async (name) => {
-  const response = await client.get('/fakeApi/posts')
+  const response = await client.get('/fakeApi/items')
   console.log(response.data)
   const delay = getDelay(2, 4);
   const filteredItems = items.filter(i => i.name.includes(name));
